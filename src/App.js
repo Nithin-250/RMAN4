@@ -4,8 +4,13 @@ import logo from "./assets/logo.png";
 import darthVader from "./assets/darth-vader.jpg";
 import starwarsBg from "./assets/starwars-bg.jpg";
 
-// ✅ Enhanced TTS for long content (chunked reading)
-function convertTextToSpeech(text, onEndCallback) {
+// Global TTS state
+let sentenceQueue = [];
+let currentIndex = 0;
+let currentUtterance = null;
+
+// Enhanced TTS with resume support
+function convertTextToSpeech(text, startFrom = 0, onEndCallback) {
   return new Promise((resolve, reject) => {
     if (!window.speechSynthesis) {
       reject(new Error("Speech Synthesis not supported"));
@@ -24,30 +29,37 @@ function convertTextToSpeech(text, onEndCallback) {
     };
 
     const speakChunks = () => {
-      const sentences = text.match(/[^.!?]+[.!?]*/g) || [text];
-      let index = 0;
+      sentenceQueue = text.match(/[^.!?]+[.!?]*/g) || [text];
+      currentIndex = startFrom;
 
       const speakNext = () => {
-        if (index >= sentences.length) {
+        if (currentIndex >= sentenceQueue.length) {
           if (onEndCallback) onEndCallback();
           resolve();
           return;
         }
 
-        const utterance = new SpeechSynthesisUtterance(sentences[index].trim());
-        utterance.lang = "en-US";
+        const sentence = sentenceQueue[currentIndex].trim();
+        if (!sentence) {
+          currentIndex++;
+          speakNext();
+          return;
+        }
+
+        currentUtterance = new SpeechSynthesisUtterance(sentence);
+        currentUtterance.lang = "en-US";
 
         const preferredVoice = voices.find(v => v.name.includes("Google US English")) || voices[0];
-        if (preferredVoice) utterance.voice = preferredVoice;
+        if (preferredVoice) currentUtterance.voice = preferredVoice;
 
-        utterance.onend = () => {
-          index++;
+        currentUtterance.onend = () => {
+          currentIndex++;
           speakNext();
         };
 
-        utterance.onerror = (e) => reject(e.error);
+        currentUtterance.onerror = (e) => reject(e.error);
 
-        window.speechSynthesis.speak(utterance);
+        window.speechSynthesis.speak(currentUtterance);
       };
 
       speakNext();
@@ -64,6 +76,8 @@ function App() {
   const [error, setError] = useState(null);
   const [article, setArticle] = useState(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [pausedIndex, setPausedIndex] = useState(0);
+
   const speakingRef = useRef(false);
 
   const handleGenerate = async () => {
@@ -90,10 +104,12 @@ function App() {
       setIsSpeaking(true);
       speakingRef.current = true;
 
-      await convertTextToSpeech(data.content, () => {
+      await convertTextToSpeech(data.content, 0, () => {
         setIsSpeaking(false);
         speakingRef.current = false;
+        setPausedIndex(0);
       });
+
     } catch (err) {
       setError(err.message);
       setIsSpeaking(false);
@@ -103,19 +119,28 @@ function App() {
     setLoading(false);
   };
 
-  const handlePlay = () => {
+  const handlePlay = async () => {
     if (!article?.content || speakingRef.current) return;
+
     setIsSpeaking(true);
     speakingRef.current = true;
 
-    convertTextToSpeech(article.content, () => {
+    try {
+      await convertTextToSpeech(article.content, pausedIndex, () => {
+        setIsSpeaking(false);
+        speakingRef.current = false;
+        setPausedIndex(0);
+      });
+    } catch (e) {
       setIsSpeaking(false);
       speakingRef.current = false;
-    });
+    }
   };
 
   const handleStop = () => {
+    if (currentUtterance) currentUtterance.onend = null;
     window.speechSynthesis.cancel();
+    setPausedIndex(currentIndex);
     setIsSpeaking(false);
     speakingRef.current = false;
   };
@@ -139,7 +164,7 @@ function App() {
         </button>
       </div>
 
-      {/* Top Bar */}
+      {/* Top bar */}
       <div className="absolute top-0 left-0 right-0 bg-black bg-opacity-60 flex justify-between items-center px-8 py-4 z-10">
         <div className="flex items-center">
           <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-yellow-400">
@@ -195,7 +220,7 @@ function App() {
               disabled={isSpeaking}
               className="px-4 py-2 bg-yellow-400 text-black font-starwars rounded hover:bg-yellow-500 transition disabled:opacity-50"
             >
-              ▶️ Play
+              ▶️ {pausedIndex > 0 ? "Resume" : "Play"}
             </button>
             <button
               onClick={handleStop}
