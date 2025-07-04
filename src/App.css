@@ -5,21 +5,15 @@
 .star-wars-font {
   font-family: 'Star Jedi', sans-serif;
 }
-@keyframes float3D {
-  0% {
-    transform: translateY(0px) rotateX(0deg) rotateY(0deg);
-  }
-  50% {
-    transform: translateY(-10px) rotateX(5deg) rotateY(2deg);
-  }
-  100% {
-    transform: translateY(0px) rotateX(0deg) rotateY(0deg);
-  }
+.floating-title {
+  animation: floatUpDown 3s ease-in-out infinite;
 }
 
-.floating-title {
-  animation: float3D 4s ease-in-out infinite;
-  transform-style: preserve-3d;
+@keyframes floatUpDown {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+  100% { transform: translateY(0); }
 }
+
 
 
