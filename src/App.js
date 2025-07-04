@@ -4,7 +4,7 @@ import logo from "./assets/logo.png";
 import darthVader from "./assets/darth-vader.jpg";
 import starwarsBg from "./assets/starwars-bg.jpg";
 
-// Text-to-Speech function
+// ✅ Enhanced TTS for long content (chunked reading)
 function convertTextToSpeech(text, onEndCallback) {
   return new Promise((resolve, reject) => {
     if (!window.speechSynthesis) {
@@ -12,32 +12,49 @@ function convertTextToSpeech(text, onEndCallback) {
       return;
     }
 
-    const speak = () => {
-      const voices = window.speechSynthesis.getVoices();
-      if (voices.length === 0) {
-        window.speechSynthesis.onvoiceschanged = speak;
-        return;
+    let voices = [];
+
+    const loadVoices = () => {
+      voices = window.speechSynthesis.getVoices();
+      if (voices.length > 0) {
+        speakChunks();
+      } else {
+        setTimeout(loadVoices, 100);
       }
-
-      window.speechSynthesis.cancel();
-
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = "en-US";
-
-      const preferredVoice = voices.find(v => v.name.includes("Google US English"));
-      if (preferredVoice) utterance.voice = preferredVoice;
-
-      utterance.onend = () => {
-        if (onEndCallback) onEndCallback();
-        resolve();
-      };
-
-      utterance.onerror = (e) => reject(e.error);
-
-      window.speechSynthesis.speak(utterance);
     };
 
-    speak();
+    const speakChunks = () => {
+      const sentences = text.match(/[^.!?]+[.!?]*/g) || [text];
+      let index = 0;
+
+      const speakNext = () => {
+        if (index >= sentences.length) {
+          if (onEndCallback) onEndCallback();
+          resolve();
+          return;
+        }
+
+        const utterance = new SpeechSynthesisUtterance(sentences[index].trim());
+        utterance.lang = "en-US";
+
+        const preferredVoice = voices.find(v => v.name.includes("Google US English")) || voices[0];
+        if (preferredVoice) utterance.voice = preferredVoice;
+
+        utterance.onend = () => {
+          index++;
+          speakNext();
+        };
+
+        utterance.onerror = (e) => reject(e.error);
+
+        window.speechSynthesis.speak(utterance);
+      };
+
+      speakNext();
+    };
+
+    window.speechSynthesis.cancel();
+    loadVoices();
   });
 }
 
@@ -122,7 +139,7 @@ function App() {
         </button>
       </div>
 
-      {/* Top bar */}
+      {/* Top Bar */}
       <div className="absolute top-0 left-0 right-0 bg-black bg-opacity-60 flex justify-between items-center px-8 py-4 z-10">
         <div className="flex items-center">
           <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-yellow-400">
@@ -131,7 +148,7 @@ function App() {
         </div>
       </div>
 
-      {/* Title with floating 3D effect */}
+      {/* Title */}
       <h1 className="floating-title text-yellow-400 text-6xl md:text-8xl font-starwars text-center drop-shadow-[2px_2px_0_black] mb-6">
         Talkify: The Podcast Force Awakens
       </h1>
