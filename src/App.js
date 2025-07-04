@@ -129,18 +129,10 @@ function App() {
             <img src={logo} alt="Logo" className="w-full h-full object-cover" />
           </div>
         </div>
-        <div className="flex space-x-4 items-center">
-          <button className="text-yellow-400 font-starwars text-lg hover:text-yellow-500 transition">
-            Login
-          </button>
-          <button className="text-yellow-400 font-starwars text-lg border border-yellow-400 rounded-full px-4 py-1 hover:bg-yellow-400 hover:text-black transition">
-            Signup
-          </button>
-        </div>
       </div>
 
-      {/* Title */}
-      <h1 className="text-yellow-400 text-6xl md:text-8xl font-starwars text-center drop-shadow-[2px_2px_0_black] mb-6">
+      {/* Title with floating 3D effect */}
+      <h1 className="floating-title text-yellow-400 text-6xl md:text-8xl font-starwars text-center drop-shadow-[2px_2px_0_black] mb-6">
         Talkify: The Podcast Force Awakens
       </h1>
       <p className="text-yellow-400 text-2xl md:text-3xl font-starwars text-center drop-shadow-[2px_2px_0_black] mb-12 max-w-2xl">
@@ -158,4 +150,48 @@ function App() {
         />
         <button
           onClick={handleGenerate}
-          className="px-6 py-4 bg-yellow-400
+          className="px-6 py-4 bg-yellow-400 text-black font-starwars text-lg rounded-lg hover:bg-yellow-500 transition"
+          disabled={loading}
+        >
+          {loading ? "Loading..." : "Generate Podcast"}
+        </button>
+      </div>
+
+      {/* Error */}
+      {error && (
+        <p className="text-red-400 text-lg font-starwars mt-4">{error}</p>
+      )}
+
+      {/* Output */}
+      {article && (
+        <div className="bg-black bg-opacity-70 p-6 mt-6 rounded-lg border-2 border-yellow-500 shadow-lg max-w-3xl text-white space-y-4 z-10">
+          <h2 className="text-3xl font-starwars border-b border-yellow-400 pb-2">
+            {article.title}
+          </h2>
+
+          <p className="text-yellow-300 font-starwars text-xl mt-4">Full Article:</p>
+          <p className="text-md font-starwars whitespace-pre-line">{article.content}</p>
+
+          <div className="flex space-x-4 mt-6">
+            <button
+              onClick={handlePlay}
+              disabled={isSpeaking}
+              className="px-4 py-2 bg-yellow-400 text-black font-starwars rounded hover:bg-yellow-500 transition disabled:opacity-50"
+            >
+              ▶️ Play
+            </button>
+            <button
+              onClick={handleStop}
+              disabled={!isSpeaking}
+              className="px-4 py-2 bg-yellow-400 text-black font-starwars rounded hover:bg-yellow-500 transition disabled:opacity-50"
+            >
+              ⏹ Stop
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default App;
