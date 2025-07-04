@@ -5,3 +5,13 @@
 .star-wars-font {
   font-family: 'Star Jedi', sans-serif;
 }
+#parallax-wrapper {
+  perspective: 1000px;
+  transform-style: preserve-3d;
+}
+
+.parallax-inner {
+  transition: transform 0.1s ease;
+  will-change: transform;
+}
+
