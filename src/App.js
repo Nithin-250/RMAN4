@@ -1,15 +1,16 @@
+// App.js
 import React, { useState, useEffect, useRef } from "react";
 import "./App.css";
 import logo from "./assets/logo.png";
 import darthVader from "./assets/darth-vader.jpg";
 import starwarsBg from "./assets/starwars-bg.jpg";
+import { useNavigate } from "react-router-dom";
 
 // Global TTS state
 let sentenceQueue = [];
 let currentIndex = 0;
 let currentUtterance = null;
 
-// Enhanced TTS with resume support
 function convertTextToSpeech(text, startFrom = 0, onEndCallback) {
   return new Promise((resolve, reject) => {
     if (!window.speechSynthesis) {
@@ -18,7 +19,6 @@ function convertTextToSpeech(text, startFrom = 0, onEndCallback) {
     }
 
     let voices = [];
-
     const loadVoices = () => {
       voices = window.speechSynthesis.getVoices();
       if (voices.length > 0) {
@@ -79,6 +79,7 @@ function App() {
   const [pausedIndex, setPausedIndex] = useState(0);
 
   const speakingRef = useRef(false);
+  const navigate = useNavigate();
 
   const handleGenerate = async () => {
     if (!url.trim()) {
@@ -109,7 +110,6 @@ function App() {
         speakingRef.current = false;
         setPausedIndex(0);
       });
-
     } catch (err) {
       setError(err.message);
       setIsSpeaking(false);
@@ -154,17 +154,15 @@ function App() {
       className="relative min-h-screen flex flex-col justify-center items-center bg-cover bg-center p-8"
       style={{ backgroundImage: `url(${starwarsBg})` }}
     >
-      {/* Vader Button */}
       <div className="fixed bottom-4 right-4 z-50">
         <button
-          onClick={() => (window.location.href = "/darth-vader")}
+          onClick={() => navigate("/darth-vader")}
           className="rounded-full overflow-hidden w-16 h-16 border-4 border-yellow-500 shadow-lg hover:scale-110 transition-transform duration-300"
         >
           <img src={darthVader} alt="Darth Vader" className="w-full h-full object-cover" />
         </button>
       </div>
 
-      {/* Top bar */}
       <div className="absolute top-0 left-0 right-0 bg-black bg-opacity-60 flex justify-between items-center px-8 py-4 z-10">
         <div className="flex items-center">
           <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-yellow-400">
@@ -173,7 +171,6 @@ function App() {
         </div>
       </div>
 
-      {/* Title */}
       <h1 className="floating-title text-yellow-400 text-6xl md:text-8xl font-starwars text-center drop-shadow-[2px_2px_0_black] mb-6">
         Talkify: The Podcast Force Awakens
       </h1>
@@ -181,7 +178,6 @@ function App() {
         Paste a URL below and generate your Star Wars-inspired podcast!
       </p>
 
-      {/* Input */}
       <div className="flex flex-col sm:flex-row items-center w-full max-w-xl space-y-4 sm:space-y-0 sm:space-x-4 z-10">
         <input
           type="text"
@@ -199,12 +195,10 @@ function App() {
         </button>
       </div>
 
-      {/* Error */}
       {error && (
         <p className="text-red-400 text-lg font-starwars mt-4">{error}</p>
       )}
 
-      {/* Output */}
       {article && (
         <div className="bg-black bg-opacity-70 p-6 mt-6 rounded-lg border-2 border-yellow-500 shadow-lg max-w-3xl text-white space-y-4 z-10">
           <h2 className="text-3xl font-starwars border-b border-yellow-400 pb-2">
@@ -237,3 +231,4 @@ function App() {
 }
 
 export default App;
+
