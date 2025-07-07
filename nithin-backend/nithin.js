@@ -13,10 +13,12 @@ app.post('/extract', async (req, res) => {
 
   console.log("📥 Received URL:", url);
 
+  // Validate the URL input
   if (!url || typeof url !== 'string') {
     return res.status(400).json({ error: 'Invalid URL' });
   }
 
+  // Block specific domains
   if (url.includes('twitter.com') || url.includes('x.com')) {
     return res.status(400).json({ error: 'Twitter/X links not supported.' });
   }
@@ -25,16 +27,18 @@ app.post('/extract', async (req, res) => {
     console.log("🌐 Fetching URL with axios...");
     const response = await axios.get(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0',
+        'User -Agent': 'Mozilla/5.0',
         'Accept-Language': 'en-US,en;q=0.9'
       },
       timeout: 20000,
     });
 
+    // Parse the HTML response
     const dom = new JSDOM(response.data, { url });
     const reader = new Readability(dom.window.document);
     const article = reader.parse();
 
+    // Check if the extracted content is valid
     if (article?.textContent && article.textContent.length > 200) {
       console.log("✅ Extraction success!");
       res.json({
@@ -58,4 +62,7 @@ app.get("/", (req, res) => {
 
 // ✅ Start the server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
+
